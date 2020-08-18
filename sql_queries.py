@@ -6,11 +6,28 @@ song_table_drop = "DROP TABLE IF EXISTS songs;"
 artist_table_drop = "DROP TABLE IF EXISTS artists;"
 time_table_drop = "DROP TABLE IF EXISTS timestamps;"
 
+# CREATE ENUM TYPES
+
+user_gender_enum_create = ("""
+CREATE TYPE user_gender AS ENUM (
+    'M',
+    'F',
+    'Other'
+);
+""")
+
+user_level_enum_create = ("""
+CREATE TYPE user_level AS ENUM (
+    'free',
+    'paid'
+);
+""")
+
 # CREATE TABLES
 
 songplay_table_create = ("""
 CREATE TABLE IF NOT EXISTS songplays (
-    id            int                       PRIMARY KEY,
+    id            SERIAL                    PRIMARY KEY,
     start_time    timestamp                 NOT NULL,
     user_id       int                       ,
     level         text                      NOT NULL,
@@ -27,7 +44,7 @@ CREATE TABLE IF NOT EXISTS users (
     id            int                       PRIMARY KEY,
     first_name    text                      NOT NULL,
     last_name     text                      NOT NULL,
-    gender        text                      NOT NULL,
+    gender        user_gender               NOT NULL,
     level         text                      NOT NULL
 );
 """)
@@ -64,7 +81,9 @@ CREATE TABLE IF NOT EXISTS timestamps (
 );
 """)
 
-foreign_key_constraints = ("""
+# CREATE FOREIGN KEY CONTRAINTS
+
+foreign_key_constraints_create = ("""
 ALTER TABLE songplays ADD CONSTRAINT FK_USERS FOREIGN KEY(user_id) REFERENCES users(id);
 ALTER TABLE songplays ADD CONSTRAINT FK_SONGS FOREIGN KEY(song_id) REFERENCES songs(id);
 ALTER TABLE songplays ADD CONSTRAINT FK_ARTISTS FOREIGN KEY(artist_id) REFERENCES artists(id);
@@ -121,5 +140,20 @@ WHERE
 
 # QUERY LISTS
 
-create_table_queries = [songplay_table_create, user_table_create, song_table_create, artist_table_create, time_table_create, foreign_key_constraints]
-drop_table_queries = [songplay_table_drop, user_table_drop, song_table_drop, artist_table_drop, time_table_drop]
+create_table_queries = [
+    user_gender_enum_create,
+    user_level_enum_create,
+    songplay_table_create,
+    user_table_create,
+    song_table_create,
+    artist_table_create,
+    time_table_create,
+    foreign_key_constraints_create
+]
+drop_table_queries = [
+    songplay_table_drop,
+    user_table_drop,
+    song_table_drop,
+    artist_table_drop,
+    time_table_drop
+]
