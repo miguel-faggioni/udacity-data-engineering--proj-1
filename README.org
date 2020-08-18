@@ -79,4 +79,10 @@
 
   With this information it is now possible to create queries to better analyze Sparkify's users' usage patterns.
 
-** Example queries for analysis
+* TODO Example queries for analysis
+
+** Average session length
+
+** Day of the week with highest usage
+
+** Free users with usage higher than average paid user usage

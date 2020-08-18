@@ -15,11 +15,19 @@ def process_song_file(cur, filepath):
 
     # insert song record
     song_data = list(df[['song_id','title','artist_id','year','duration']].values)
-    cur.execute(song_table_insert, song_data)
+    try:
+        cur.execute(song_table_insert, song_data)
+    except psycopg2.Error as e:
+        print("Error inserting into songs table")
+        print(e)
     
     # insert artist record
     artist_data = list(df[['artist_id','artist_name','artist_location','artist_latitude','artist_longitude']].values)
-    cur.execute(artist_table_insert, artist_data)
+    try:
+        cur.execute(artist_table_insert, artist_data)
+    except psycopg2.Error as e:
+        print("Error inserting into artists table")
+        print(e)
 
 
 def process_log_file(cur, filepath):
@@ -54,22 +62,34 @@ def process_log_file(cur, filepath):
     time_df = pd.concat(time_data, axis=1)
 
     for i, row in time_df.iterrows():
-        cur.execute(time_table_insert, list(row))
+        try:
+            cur.execute(time_table_insert, list(row))
+        except psycopg2.Error as e:
+            print("Error inserting into timestamps table")
+            print(e)
 
     # load user table
     user_df = df[['userId','firstName','lastName','gender','level']]
 
     # insert user records
     for i, row in user_df.iterrows():
-        cur.execute(user_table_insert, row)
+        try:
+            cur.execute(user_table_insert, row)
+        except psycopg2.Error as e:
+            print("Error inserting into users table")
+            print(e)
 
     # insert songplay records
     for index, row in df.iterrows():
-        
+
         # get songid and artistid from song and artist tables
-        cur.execute(song_select, (row.song, row.artist, row.length))
+        try:
+            cur.execute(song_select, (row.song, row.artist, row.length))
+        except psycopg2.Error as e:
+            print("Error selecting from songs table")
+            print(e)
         results = cur.fetchone()
-        
+
         if results:
             songid, artistid = results
         else:
@@ -77,7 +97,6 @@ def process_log_file(cur, filepath):
 
         # insert songplay record
         songplay_data = [
-            index,
             row.ts,
             row.userId,
             row.level,
@@ -87,7 +106,11 @@ def process_log_file(cur, filepath):
             row.location,
             row.userAgent
         ]
-        cur.execute(songplay_table_insert, songplay_data)
+        try:
+            cur.execute(songplay_table_insert, songplay_data)
+        except psycopg2.Error as e:
+            print("Error inserting into songplays table")
+            print(e)
 
 
 def process_data(cur, conn, filepath, func):

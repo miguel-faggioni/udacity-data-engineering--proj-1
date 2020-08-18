@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS songs (
     title         text                      NOT NULL,
     artist_id     text                      NOT NULL,
     year          int                       NOT NULL,
-    length        decimal                   NOT NULL
+    duration      decimal                   NOT NULL
 );
 """)
 
@@ -63,9 +63,9 @@ artist_table_create = ("""
 CREATE TABLE IF NOT EXISTS artists (
     id            text                      PRIMARY KEY,
     name          text                      NOT NULL,
-    location      text                      NOT NULL,
-    latitude      decimal                   ,
-    longitude     decimal                   
+    location      text                      ,
+    latitude      numeric(9,6)              ,
+    longitude     numeric(9,6)              
 );
 """)
 
@@ -93,8 +93,8 @@ ALTER TABLE songplays ADD CONSTRAINT FK_TIMESTAMPS FOREIGN KEY(start_time) REFER
 # INSERT RECORDS
 
 songplay_table_insert = ("""
-INSERT INTO songplays (id,start_time,user_id,level,song_id,artist_id,session_id,location,user_agent) 
-VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+INSERT INTO songplays (start_time,user_id,level,song_id,artist_id,session_id,location,user_agent) 
+VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
 ON CONFLICT (id)
 DO NOTHING;
 """)
@@ -107,7 +107,7 @@ DO NOTHING;
 """)
 
 song_table_insert = ("""
-INSERT INTO songs (id,title,artist_id,year,length)
+INSERT INTO songs (id,title,artist_id,year,duration)
 VALUES (%s,%s,%s,%s,%s)
 ON CONFLICT (id)
 DO NOTHING;
@@ -135,7 +135,7 @@ JOIN artists a on s.artist_id = a.id
 WHERE 
     s.title = %s AND
     a.name = %s AND
-    s.length = %s
+    s.duration = %s
 """)
 
 # QUERY LISTS
