@@ -5,6 +5,11 @@ import pandas as pd
 from sql_queries import *
 
 def process_song_file(cur, filepath):
+    """
+    - Reads the file received in the parameters
+    - Extracts the wanted fields from the json
+    - Inserts both song and artist data into the database using SQL query defined in sql_queries.py
+    """
     # open song file
     df = pd.read_json(filepath, typ='series')
 
@@ -18,6 +23,14 @@ def process_song_file(cur, filepath):
 
 
 def process_log_file(cur, filepath):
+    """
+    - Reads the file received in the parameters
+    - Filters the data to account only for NextSong page hits
+    - Converts the timestamp into datetime format and extracts the wanted pieces from it
+    - Inserts the data into the timestamps and user tables
+    - Searches the song table to get the correct song and artist id
+    - Inserts the data into the songplays table
+    """
     # open log file
     df = pd.read_json(filepath, lines=True)
 
@@ -78,6 +91,11 @@ def process_log_file(cur, filepath):
 
 
 def process_data(cur, conn, filepath, func):
+    """
+    - Gets all the json files insite the filepath received in the parameters
+    - Calls the function received in the parameters passing each json file found
+    - Prints the process to the console
+    """
     # get all files matching extension from directory
     all_files = []
     for root, dirs, files in os.walk(filepath):
@@ -97,6 +115,11 @@ def process_data(cur, conn, filepath, func):
 
 
 def main():
+    """
+    - Connects to the Postgres instance running on localhost 
+    - Accesses the sparkifydb database
+    - Processes the song and log data json files for database insertion
+    """
     conn = psycopg2.connect("host=127.0.0.1 dbname=sparkifydb user=student password=student")
     cur = conn.cursor()
 

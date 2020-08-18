@@ -70,3 +70,13 @@
    #+BEGIN_SRC bash
      python etl.py
    #+END_SRC
+
+* Motivation
+
+  In order to be able to analyze the songplays of Sparkify as well as user profiles, this project allows for insertion of the log files collected into a Postgres database. This allows better and quicker parsing of the information with SQL queries.
+
+  The database is designed using the star schema, with the ~users~, ~songs~, ~artists~ tables containing the information of their namesake entities; the ~timestamps~ table containing the timestamp of the songplays divided into hour, day, week, month, year and weekday (for more granularity during the analysis); and the ~songplays~ table being the fact table of the start schema, containing foreign keys to the previously described dimension tables, along with the user account type (free or paid), location, and User Agent used for the access.
+
+  With this information it is now possible to create queries to better analyze Sparkify's users' usage patterns.
+
+** Example queries for analysis
