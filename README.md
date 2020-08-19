@@ -1,28 +1,17 @@
-- [](#org7f81a80)
-- [Data Modeling with Postgres - Udacity](#orga9c68e9)
-  - [Introduction](#org0857e64)
-  - [Project Description](#org28448c7)
-- [Folder structure](#org20c1817)
-- [Usage](#orgacbd7ef)
-  - [Creating the tables](#org507dd46)
-  - [Running the pipeline](#org0e88a76)
+- [Data Modeling with Postgres - Udacity](#orgef10cbf)
+  - [Introduction](#org0461a83)
+  - [Project Description](#orga82479d)
+- [Folder structure](#orga1f09a9)
+- [Usage](#orgde76376)
+  - [Creating the tables](#orgb21f108)
+  - [Running the pipeline](#org1415ac6)
+- [Motivation](#orgb05d89d)
+- [Example queries for analysis](#org08d8dc3)
+  - [Average session length](#orge0467aa)
+  - [Hour of the day with highest number of songplays](#orge29bb42)
 
 
-<a id="org7f81a80"></a>
-
-# TODO 
-
-1.  The README file includes a summary of the project, how to run the Python scripts, and an explanation of the files in the repository. Comments are used effectively and each function has a docstring.
-2.  Discuss the purpose of this database in the context of the startup, Sparkify, and their analytical goals.
-3.  State and justify your database schema design and ETL pipeline.
-4.  [Optional] Provide example queries and results for song play analysis.
-5.  Scripts have an intuitive, easy-to-follow structure with code separated into logical functions. Naming for variables and functions follows the PEP8 style guidelines.
-6.  Insert data using the COPY command to bulk insert log files instead of using INSERT on one row at a time
-7.  Add data quality checks
-8.  Create a dashboard for analytic queries on your new database (how?)
-
-
-<a id="orga9c68e9"></a>
+<a id="orgef10cbf"></a>
 
 # Data Modeling with Postgres - Udacity
 
@@ -31,7 +20,7 @@ This repository is intended for the first project of the Udacity Data Engineerin
 The introduction and project description were taken from the Udacity curriculum, since they summarize the activity better than I could heh.
 
 
-<a id="org0857e64"></a>
+<a id="org0461a83"></a>
 
 ## Introduction
 
@@ -40,14 +29,14 @@ A startup called Sparkify wants to analyze the data they've been collecting on s
 They'd like a data engineer to create a Postgres database with tables designed to optimize queries on song play analysis, and bring you on the project. Your role is to create a database schema and ETL pipeline for this analysis. You'll be able to test your database and ETL pipeline by running queries given to you by the analytics team from Sparkify and compare your results with their expected results.
 
 
-<a id="org28448c7"></a>
+<a id="orga82479d"></a>
 
 ## Project Description
 
 In this project, you'll apply what you've learned on data modeling with Postgres and build an ETL pipeline using Python. To complete the project, you will need to define fact and dimension tables for a star schema for a particular analytic focus, and write an ETL pipeline that transfers data from files in two local directories into these tables in Postgres using Python and SQL.
 
 
-<a id="org20c1817"></a>
+<a id="orga1f09a9"></a>
 
 # Folder structure
 
@@ -75,12 +64,12 @@ In this project, you'll apply what you've learned on data modeling with Postgres
 ```
 
 
-<a id="orgacbd7ef"></a>
+<a id="orgde76376"></a>
 
 # Usage
 
 
-<a id="org507dd46"></a>
+<a id="orgb21f108"></a>
 
 ## Creating the tables
 
@@ -95,7 +84,7 @@ It connects to a Postgre database running on localhost and drops then creates a 
 The core functionality of the file was provided by Udacity, and only the SQL queries needed to drop and create the tables was filled in on the `sql_queries.py` file.
 
 
-<a id="org0e88a76"></a>
+<a id="org1415ac6"></a>
 
 ## Running the pipeline
 
@@ -103,4 +92,79 @@ After the tables are created and the log and song files are on the data folder, 
 
 ```bash
 python etl.py
+```
+
+
+<a id="orgb05d89d"></a>
+
+# Motivation
+
+In order to be able to analyze the songplays of Sparkify as well as user profiles, this project allows for insertion of the log files collected into a Postgres database. This allows better and quicker parsing of the information with SQL queries.
+
+The database is designed using the star schema, with the `users`, `songs`, `artists` tables containing the information of their namesake entities; the `timestamps` table containing the timestamp of the songplays divided into hour, day, week, month, year and weekday (for more granularity during the analysis); and the `songplays` table being the fact table of the start schema, containing foreign keys to the previously described dimension tables, along with the user account type (free or paid), location, and User Agent used for the access.
+
+With this information it is now possible to create queries to better analyze Sparkify's users' usage patterns.
+
+
+<a id="org08d8dc3"></a>
+
+# Example queries for analysis
+
+
+<a id="orge0467aa"></a>
+
+## Average session length
+
+Selecting first the first and last start time of each songplay session we can calculate the time difference to get an estimate of each session length. It is only an estimate since we don't have the end time of the session, so this will be a lower bound on each session length.
+
+Then we can select the average of the previous query to get the average session length, in seconds.
+
+```sql
+ WITH sessions AS (
+     SELECT sp.session_id, 
+            min(sp.start_time)::timestamp as min,
+            max(sp.start_time)::timestamp as max
+     FROM songplays sp
+     GROUP BY 1
+),
+session_length AS (
+     SELECT sessions.session_id,
+            ((DATE_PART('day', max - min) * 24 +
+              DATE_PART('hour', max - min)) * 60 +
+              DATE_PART('minute', max - min)) * 60 +
+              DATE_PART('second', max - min) as length_in_seconds
+     FROM sessions
+)
+SELECT AVG(length_in_seconds) 
+FROM session_length
+```
+
+
+<a id="orge29bb42"></a>
+
+## Hour of the day with highest number of songplays
+
+Joining the timestamps table with with songplays we can get the hour of the day when each songplay recorded occurred; then grouping by the selected column and counting we can know how many songplays occurred on each hour of the day.
+
+By changing the column selected from the timestamps table we can change what information we extract.
+
+```sql
+SELECT ts.weekday, COUNT(*)
+FROM timestamps ts
+JOIN songplays sp
+ON ts.start_time = sp.start_time
+GROUP BY 1
+ORDER BY 2 DESC
+```
+
+We can also add a statement to consider only the free users, and get the most effective hours to play adds to try and convert them into paid users, for example.
+
+```sql
+SELECT ts.weekday, COUNT(*)
+FROM timestamps ts
+JOIN songplays sp 
+ON ts.start_time = sp.start_time AND
+   sp.level = 'free'
+GROUP BY 1
+ORDER BY 2 DESC   
 ```
