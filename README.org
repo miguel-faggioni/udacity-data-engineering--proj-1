@@ -1,13 +1,3 @@
-* TODO
-1. The README file includes a summary of the project, how to run the Python scripts, and an explanation of the files in the repository. Comments are used effectively and each function has a docstring.
-2. Discuss the purpose of this database in the context of the startup, Sparkify, and their analytical goals.
-3. State and justify your database schema design and ETL pipeline.
-4. [Optional] Provide example queries and results for song play analysis.
-5. Scripts have an intuitive, easy-to-follow structure with code separated into logical functions. Naming for variables and functions follows the PEP8 style guidelines.
-6. Insert data using the COPY command to bulk insert log files instead of using INSERT on one row at a time
-7. Add data quality checks
-8. Create a dashboard for analytic queries on your new database (how?)
-
 * Data Modeling with Postgres - Udacity
 
   This repository is intended for the first project of the Udacity Data Engineering Nanodegree Program: Data Modeling with Postgres.
@@ -79,10 +69,58 @@
 
   With this information it is now possible to create queries to better analyze Sparkify's users' usage patterns.
 
-* TODO Example queries for analysis
+* Example queries for analysis
 
 ** Average session length
 
-** Day of the week with highest usage
+   Selecting first the first and last start time of each songplay session we can calculate the time difference to get an estimate of each session length. It is only an estimate since we don't have the end time of the session, so this will be a lower bound on each session length.
 
-** Free users with usage higher than average paid user usage
+   Then we can select the average of the previous query to get the average session length, in seconds.
+
+   #+BEGIN_SRC sql
+      WITH sessions AS (
+          SELECT sp.session_id, 
+                 min(sp.start_time)::timestamp as min,
+                 max(sp.start_time)::timestamp as max
+          FROM songplays sp
+          GROUP BY 1
+     ),
+     session_length AS (
+          SELECT sessions.session_id,
+                 ((DATE_PART('day', max - min) * 24 +
+                   DATE_PART('hour', max - min)) * 60 +
+                   DATE_PART('minute', max - min)) * 60 +
+                   DATE_PART('second', max - min) as length_in_seconds
+          FROM sessions
+     )
+     SELECT AVG(length_in_seconds) 
+     FROM session_length
+   #+END_SRC
+
+** Hour of the day with highest number of songplays
+
+   Joining the timestamps table with with songplays we can get the hour of the day when each songplay recorded occurred; then grouping by the selected column and counting we can know how many songplays occurred on each hour of the day.
+
+   By changing the column selected from the timestamps table we can change what information we extract.
+
+   #+BEGIN_SRC sql
+     SELECT ts.weekday, COUNT(*)
+     FROM timestamps ts
+     JOIN songplays sp
+     ON ts.start_time = sp.start_time
+     GROUP BY 1
+     ORDER BY 2 DESC
+   #+END_SRC
+   
+   We can also add a statement to consider only the free users, and get the most effective hours to play adds to try and convert them into paid users, for example.
+
+   #+BEGIN_SRC sql
+     SELECT ts.weekday, COUNT(*)
+     FROM timestamps ts
+     JOIN songplays sp 
+     ON ts.start_time = sp.start_time AND
+        sp.level = 'free'
+     GROUP BY 1
+     ORDER BY 2 DESC   
+   #+END_SRC
+
