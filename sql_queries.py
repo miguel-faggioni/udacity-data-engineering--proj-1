@@ -4,7 +4,7 @@ songplay_table_drop = "DROP TABLE IF EXISTS songplays;"
 user_table_drop = "DROP TABLE IF EXISTS users;"
 song_table_drop = "DROP TABLE IF EXISTS songs;"
 artist_table_drop = "DROP TABLE IF EXISTS artists;"
-time_table_drop = "DROP TABLE IF EXISTS timestamps;"
+time_table_drop = "DROP TABLE IF EXISTS time;"
 
 # CREATE ENUM TYPES
 
@@ -27,7 +27,7 @@ CREATE TYPE user_level AS ENUM (
 
 songplay_table_create = ("""
 CREATE TABLE IF NOT EXISTS songplays (
-    id            SERIAL                    PRIMARY KEY,
+    songplay_id   SERIAL                    PRIMARY KEY,
     start_time    timestamp                 NOT NULL,
     user_id       int                       ,
     level         text                      NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS songplays (
 
 user_table_create = ("""
 CREATE TABLE IF NOT EXISTS users (
-    id            int                       PRIMARY KEY,
+    user_id       int                       PRIMARY KEY,
     first_name    text                      NOT NULL,
     last_name     text                      NOT NULL,
     gender        user_gender               NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 song_table_create = ("""
 CREATE TABLE IF NOT EXISTS songs (
-    id            text                      PRIMARY KEY,
+    song_id       text                      PRIMARY KEY,
     title         text                      NOT NULL,
     artist_id     text                      NOT NULL,
     year          int                       NOT NULL,
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS songs (
 
 artist_table_create = ("""
 CREATE TABLE IF NOT EXISTS artists (
-    id            text                      PRIMARY KEY,
+    artist_id     text                      PRIMARY KEY,
     name          text                      NOT NULL,
     location      text                      ,
     latitude      numeric(9,6)              ,
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS artists (
 """)
 
 time_table_create = ("""
-CREATE TABLE IF NOT EXISTS timestamps (
+CREATE TABLE IF NOT EXISTS time (
     start_time    timestamp                 PRIMARY KEY,
     hour          int                       NOT NULL,
     day           int                       NOT NULL,
@@ -84,9 +84,9 @@ CREATE TABLE IF NOT EXISTS timestamps (
 # CREATE FOREIGN KEY CONTRAINTS
 
 foreign_key_constraints_create = ("""
-ALTER TABLE songplays ADD CONSTRAINT FK_USERS FOREIGN KEY(user_id) REFERENCES users(id);
-ALTER TABLE songplays ADD CONSTRAINT FK_SONGS FOREIGN KEY(song_id) REFERENCES songs(id);
-ALTER TABLE songplays ADD CONSTRAINT FK_ARTISTS FOREIGN KEY(artist_id) REFERENCES artists(id);
+ALTER TABLE songplays ADD CONSTRAINT FK_USERS FOREIGN KEY(user_id) REFERENCES users(user_id);
+ALTER TABLE songplays ADD CONSTRAINT FK_SONGS FOREIGN KEY(song_id) REFERENCES songs(song_id);
+ALTER TABLE songplays ADD CONSTRAINT FK_ARTISTS FOREIGN KEY(artist_id) REFERENCES artists(artist_id);
 ALTER TABLE songplays ADD CONSTRAINT FK_TIMESTAMPS FOREIGN KEY(start_time) REFERENCES timestamps(start_time);
 """)
 
@@ -94,44 +94,34 @@ ALTER TABLE songplays ADD CONSTRAINT FK_TIMESTAMPS FOREIGN KEY(start_time) REFER
 
 songplay_table_insert = ("""
 INSERT INTO songplays (start_time,user_id,level,song_id,artist_id,session_id,location,user_agent) 
-VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
-ON CONFLICT (id)
-DO NOTHING;
+VALUES (%s,%s,%s,%s,%s,%s,%s,%s);
 """)
 
 user_table_insert = ("""
-INSERT INTO users (id,first_name,last_name,gender,level)
-VALUES (%s,%s,%s,%s,%s)
-ON CONFLICT (id)
-DO NOTHING;
+INSERT INTO users (user_id,first_name,last_name,gender,level)
+VALUES (%s,%s,%s,%s,%s);
 """)
 
 song_table_insert = ("""
-INSERT INTO songs (id,title,artist_id,year,duration)
-VALUES (%s,%s,%s,%s,%s)
-ON CONFLICT (id)
-DO NOTHING;
+INSERT INTO songs (song_id,title,artist_id,year,duration)
+VALUES (%s,%s,%s,%s,%s);
 """)
 
 artist_table_insert = ("""
-INSERT INTO artists (id,name,location,latitude,longitude)
-VALUES (%s,%s,%s,%s,%s)
-ON CONFLICT (id)
-DO NOTHING;
+INSERT INTO artists (artist_id,name,location,latitude,longitude)
+VALUES (%s,%s,%s,%s,%s);
 """)
 
 time_table_insert = ("""
-INSERT INTO timestamps (start_time,hour,day,week,month,year,weekday)
-VALUES (%s,%s,%s,%s,%s,%s,%s)
-ON CONFLICT (start_time)
-DO NOTHING;
+INSERT INTO time (start_time,hour,day,week,month,year,weekday)
+VALUES (%s,%s,%s,%s,%s,%s,%s);
 """)
 
 # FIND SONGS
 
 song_select = ("""
 SELECT s.id, a.id FROM songs s
-JOIN artists a on s.artist_id = a.id
+JOIN artists a on s.artist_id = a.artist_id
 WHERE 
     s.title = %s AND
     a.name = %s AND
@@ -148,7 +138,7 @@ create_table_queries = [
     song_table_create,
     artist_table_create,
     time_table_create,
-    foreign_key_constraints_create
+    #foreign_key_constraints_create
 ]
 drop_table_queries = [
     songplay_table_drop,

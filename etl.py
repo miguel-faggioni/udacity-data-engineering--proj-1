@@ -11,10 +11,10 @@ def process_song_file(cur, filepath):
     - Inserts both song and artist data into the database using SQL query defined in sql_queries.py
     """
     # open song file
-    df = pd.read_json(filepath, typ='series')
+    df = pd.read_json(filepath, lines=True)
 
     # insert song record
-    song_data = list(df[['song_id','title','artist_id','year','duration']].values)
+    song_data = df[['song_id','title','artist_id','year','duration']].values[0]
     try:
         cur.execute(song_table_insert, song_data)
     except psycopg2.Error as e:
@@ -22,7 +22,7 @@ def process_song_file(cur, filepath):
         print(e)
     
     # insert artist record
-    artist_data = list(df[['artist_id','artist_name','artist_location','artist_latitude','artist_longitude']].values)
+    artist_data = df[['artist_id','artist_name','artist_location','artist_latitude','artist_longitude']].values[0]
     try:
         cur.execute(artist_table_insert, artist_data)
     except psycopg2.Error as e:
@@ -46,20 +46,33 @@ def process_log_file(cur, filepath):
     df = df[ df.page == 'NextSong' ]
 
     # convert timestamp column to datetime
-    df['ts'] = pd.to_datetime(df['ts'],unit='ms')
-    t = df.ts
+    t = pd.to_datetime(df['ts'],unit='ms')
     
     # insert time data records
+    time_data = {
+        'timestamp': t,
+        'hour': t.dt.hour,
+        'day': t.dt.day,
+        'week': t.dt.isocalendar().week,
+        'month': t.dt.month,
+        'year': t.dt.year,
+        'weekday': t.dt.dayofweek
+    }
+    time_df = pd.DataFrame(time_data)
+    '''
     time_data = [
         t,
-        pd.Series(t.dt.hour,name='hour'),
-        pd.Series(t.dt.day,name='day'),
-        pd.Series(t.dt.isocalendar().week,name='week'),
-        pd.Series(t.dt.month,name='month'),
-        pd.Series(t.dt.year,name='year'),
-        pd.Series(t.dt.dayofweek,name='weekday')
+        t.dt.hour,
+        t.dt.day,
+        t.dt.isocalendar().week,
+        t.dt.month,
+        t.dt.year,
+        t.dt.dayofweek
     ]
-    time_df = pd.concat(time_data, axis=1)
+    column_labels = ('timestamp','hour','day','week','month','year','weekday')
+    time_dict = dict(zip(column_labels,time_data))
+    time_df = pd.DataFrame(time_data)
+    '''
 
     for i, row in time_df.iterrows():
         try:
