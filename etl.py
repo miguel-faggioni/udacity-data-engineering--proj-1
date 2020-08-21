@@ -23,7 +23,7 @@ def process_song_file(cur, filepath):
     
     # insert artist record
     artist_data = df[['artist_id','artist_name','artist_location','artist_latitude','artist_longitude']].values[0]
-    # TODO handle NaN on latitude and longitude
+    
     try:
         cur.execute(artist_table_insert, artist_data)
     except psycopg2.Error as e:
@@ -146,7 +146,7 @@ def main():
     """
     conn = psycopg2.connect("host=127.0.0.1 dbname=sparkifydb user=student password=student")
     cur = conn.cursor()
-    conn.set_session(autocommit=True)#TODO remover
+
     process_data(cur, conn, filepath='data/song_data', func=process_song_file)
     process_data(cur, conn, filepath='data/log_data', func=process_log_file)
 
