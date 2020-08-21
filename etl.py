@@ -23,6 +23,7 @@ def process_song_file(cur, filepath):
     
     # insert artist record
     artist_data = df[['artist_id','artist_name','artist_location','artist_latitude','artist_longitude']].values[0]
+    # TODO handle NaN on latitude and longitude
     try:
         cur.execute(artist_table_insert, artist_data)
     except psycopg2.Error as e:
@@ -35,7 +36,7 @@ def process_log_file(cur, filepath):
     - Reads the file received in the parameters
     - Filters the data to account only for NextSong page hits
     - Converts the timestamp into datetime format and extracts the wanted pieces from it
-    - Inserts the data into the timestamps and user tables
+    - Inserts the data into the time and user tables
     - Searches the song table to get the correct song and artist id
     - Inserts the data into the songplays table
     """
@@ -47,6 +48,7 @@ def process_log_file(cur, filepath):
 
     # convert timestamp column to datetime
     t = pd.to_datetime(df['ts'],unit='ms')
+    df['timestamp'] = t
     
     # insert time data records
     time_data = {
@@ -59,27 +61,14 @@ def process_log_file(cur, filepath):
         'weekday': t.dt.dayofweek
     }
     time_df = pd.DataFrame(time_data)
-    '''
-    time_data = [
-        t,
-        t.dt.hour,
-        t.dt.day,
-        t.dt.isocalendar().week,
-        t.dt.month,
-        t.dt.year,
-        t.dt.dayofweek
-    ]
-    column_labels = ('timestamp','hour','day','week','month','year','weekday')
-    time_dict = dict(zip(column_labels,time_data))
-    time_df = pd.DataFrame(time_data)
-    '''
 
     for i, row in time_df.iterrows():
         try:
-            cur.execute(time_table_insert, list(row))
+            cur.execute(time_table_insert, row)
         except psycopg2.Error as e:
-            print("Error inserting into timestamps table")
+            print("Error inserting into time table")
             print(e)
+            return
 
     # load user table
     user_df = df[['userId','firstName','lastName','gender','level']]
@@ -110,7 +99,7 @@ def process_log_file(cur, filepath):
 
         # insert songplay record
         songplay_data = [
-            row.ts,
+            row.timestamp,
             row.userId,
             row.level,
             songid,
@@ -124,7 +113,6 @@ def process_log_file(cur, filepath):
         except psycopg2.Error as e:
             print("Error inserting into songplays table")
             print(e)
-
 
 def process_data(cur, conn, filepath, func):
     """
@@ -158,7 +146,7 @@ def main():
     """
     conn = psycopg2.connect("host=127.0.0.1 dbname=sparkifydb user=student password=student")
     cur = conn.cursor()
-
+    conn.set_session(autocommit=True)#TODO remover
     process_data(cur, conn, filepath='data/song_data', func=process_song_file)
     process_data(cur, conn, filepath='data/log_data', func=process_log_file)
 
