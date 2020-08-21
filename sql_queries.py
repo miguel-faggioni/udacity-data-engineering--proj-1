@@ -29,7 +29,7 @@ songplay_table_create = ("""
 CREATE TABLE IF NOT EXISTS songplays (
     songplay_id   SERIAL                    PRIMARY KEY,
     start_time    timestamp                 NOT NULL,
-    user_id       int                       ,
+    user_id       int                       NOT NULL,
     level         text                      NOT NULL,
     song_id       text                      ,
     artist_id     text                      ,
@@ -42,20 +42,20 @@ CREATE TABLE IF NOT EXISTS songplays (
 user_table_create = ("""
 CREATE TABLE IF NOT EXISTS users (
     user_id       int                       PRIMARY KEY,
-    first_name    text                      NOT NULL,
-    last_name     text                      NOT NULL,
-    gender        user_gender               NOT NULL,
-    level         text                      NOT NULL
+    first_name    text                      ,
+    last_name     text                      ,
+    gender        user_gender               ,
+    level         text                      
 );
 """)
 
 song_table_create = ("""
 CREATE TABLE IF NOT EXISTS songs (
     song_id       text                      PRIMARY KEY,
-    title         text                      NOT NULL,
+    title         text                      ,
     artist_id     text                      NOT NULL,
-    year          int                       NOT NULL,
-    duration      decimal                   NOT NULL
+    year          int                       ,
+    duration      decimal                   
 );
 """)
 
@@ -87,7 +87,7 @@ foreign_key_constraints_create = ("""
 ALTER TABLE songplays ADD CONSTRAINT FK_USERS FOREIGN KEY(user_id) REFERENCES users(user_id);
 ALTER TABLE songplays ADD CONSTRAINT FK_SONGS FOREIGN KEY(song_id) REFERENCES songs(song_id);
 ALTER TABLE songplays ADD CONSTRAINT FK_ARTISTS FOREIGN KEY(artist_id) REFERENCES artists(artist_id);
-ALTER TABLE songplays ADD CONSTRAINT FK_TIMESTAMPS FOREIGN KEY(start_time) REFERENCES timestamps(start_time);
+ALTER TABLE songplays ADD CONSTRAINT FK_TIMESTAMPS FOREIGN KEY(start_time) REFERENCES time(start_time);
 """)
 
 # INSERT RECORDS
@@ -100,8 +100,8 @@ VALUES (%s,%s,%s,%s,%s,%s,%s,%s);
 user_table_insert = ("""
 INSERT INTO users (user_id,first_name,last_name,gender,level)
 VALUES (%s,%s,%s,%s,%s)
-ON CONFLICT(user_id)
-DO NOTHING;
+ON CONFLICT (id)
+DO UPDATE SET level = EXCLUDED.level;
 """)
 
 song_table_insert = ("""
@@ -146,7 +146,7 @@ create_table_queries = [
     song_table_create,
     artist_table_create,
     time_table_create,
-    #foreign_key_constraints_create
+    foreign_key_constraints_create
 ]
 drop_table_queries = [
     songplay_table_drop,
