@@ -49,7 +49,7 @@
      python create_tables.py
    #+END_SRC
 
-   It connects to a Postgre database running on localhost and drops then creates a database named ~sparkifydb~; then it executes the queries for dropping and creating the necessary tables for the ETL pipeline.
+   It connects to a Postgres database running on localhost and drops then creates a database named ~sparkifydb~; then it executes the queries for dropping and creating the necessary tables for the ETL pipeline.
 
    The core functionality of the file was provided by Udacity, and only the SQL queries needed to drop and create the tables was filled in on the ~sql_queries.py~ file.
 
